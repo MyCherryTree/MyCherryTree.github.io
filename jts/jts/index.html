@@ -1,0 +1,808 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/fluid.png">
+  <link rel="icon" href="/img/fluid.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="gis site">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="jts 源码学习。学习源码，才能更深入的了解原理 index从index的package-info里面可以看到，这个包提供各种空间索引，SpatialIndex接口里面定义了索引的4个操作，增删查，实现这个接口的有3个类：HPRtree，Quadtree和STRtree。下面简要介绍下包内的内容。    名称 空间索引 使用场景 help    Binary Interval Tree 否 四叉树">
+<meta property="og:type" content="article">
+<meta property="og:title" content="jts">
+<meta property="og:url" content="http://giscloud.eu.org/jts/jts/index.html">
+<meta property="og:site_name" content="gis小站">
+<meta property="og:description" content="jts 源码学习。学习源码，才能更深入的了解原理 index从index的package-info里面可以看到，这个包提供各种空间索引，SpatialIndex接口里面定义了索引的4个操作，增删查，实现这个接口的有3个类：HPRtree，Quadtree和STRtree。下面简要介绍下包内的内容。    名称 空间索引 使用场景 help    Binary Interval Tree 否 四叉树">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-11-15T13:38:04.000Z">
+<meta property="article:modified_time" content="2022-11-18T13:27:13.122Z">
+<meta property="article:author" content="gis site">
+<meta name="twitter:card" content="summary_large_image">
+  
+  
+  
+  <title>jts - gis小站</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"giscloud.eu.org","root":"/","version":"1.9.3","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 5.4.2"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>webgis</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-link-fill"></i>
+                链接
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" href="/./demo/">
+                    
+                    demo
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="jts"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2022-11-15 21:38" pubdate>
+          2022年11月15日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">jts</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>jts 源码学习。学习源码，才能更深入的了解原理</p>
+<h1 id="index"><a href="#index" class="headerlink" title="index"></a>index</h1><p>从index的package-info里面可以看到，这个包提供各种空间索引，SpatialIndex接口里面定义了索引的4个操作，增删查，实现这个接口的有3个类：HPRtree，Quadtree和STRtree。下面简要介绍下包内的内容。</p>
+<table>
+<thead>
+<tr>
+<th align="center">名称</th>
+<th align="center">空间索引</th>
+<th align="center">使用场景</th>
+<th align="center">help</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Binary Interval Tree</td>
+<td align="center">否</td>
+<td align="center">四叉树的一维版本。给定一个包含 n 个区间的集合 S 和一个查询点 q，报告所有包含 q 的区间；和重叠区间搜索问题：给定一个包含 n 个区间的集合 S 和一个查询区间 Q，报告 S 中与 Q 重叠的所有这些区间。</td>
+<td align="center"><a target="_blank" rel="noopener" href="https://iq.opengenus.org/interval-tree/">https://iq.opengenus.org/interval-tree/</a></td>
+</tr>
+<tr>
+<td align="center">Monotone Chains</td>
+<td align="center">否</td>
+<td align="center">凸包</td>
+<td align="center"><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/158043191">https://zhuanlan.zhihu.com/p/158043191</a></td>
+</tr>
+<tr>
+<td align="center">Hilbert-Packed R-tree</td>
+<td align="center">是</td>
+<td align="center">是R-tree的一种变体，是多维对象的索引，基于分形曲线构建静态 R 树的压缩算法</td>
+<td align="center">dim(E(a)∩E(b))</td>
+</tr>
+<tr>
+<td align="center">intervalrtree</td>
+<td align="center">否</td>
+<td align="center">一维间隔实现R树索引</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">KD-Tree</td>
+<td align="center">否</td>
+<td align="center">分割k维数据。主要应用于多维空间关键数据的搜索（如：范围搜索和最近邻搜索）。</td>
+<td align="center"><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/K-d_tree">https://en.wikipedia.org/wiki/K-d_tree</a></td>
+</tr>
+<tr>
+<td align="center">Quadtree</td>
+<td align="center">是</td>
+<td align="center">将已知范围的空间等分成四个相等的子空间</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">R-tree</td>
+<td align="center">是</td>
+<td align="center">MBR最小边界矩形的方法，从叶子节点开始用矩形将空间框起来</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">sweepline</td>
+<td align="center">否</td>
+<td align="center">它用于计算索引中间隔之间的所有重叠</td>
+<td align="center"></td>
+</tr>
+</tbody></table>
+<p>可以参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_40294332/article/details/124145741">JTS-SpatialIndex空间索引使用说明（十五）</a></p>
+<h1 id="srtree"><a href="#srtree" class="headerlink" title="srtree"></a>srtree</h1><p><a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/750351">https://developer.aliyun.com/article/750351</a><br><a target="_blank" rel="noopener" href="https://www.cnblogs.com/fly2wind/p/14525405.html">https://www.cnblogs.com/fly2wind/p/14525405.html</a><br><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/06ba03e1692f">https://www.jianshu.com/p/06ba03e1692f</a><br><a target="_blank" rel="noopener" href="https://www.bbsmax.com/A/Vx5MXQG9JN/">https://www.bbsmax.com/A/Vx5MXQG9JN/</a><br><a target="_blank" rel="noopener" href="http://t.zoukankan.com/naaoveGIS-p-6774549.html">http://t.zoukankan.com/naaoveGIS-p-6774549.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wk1134314305/article/details/76408181">https://blog.csdn.net/wk1134314305/article/details/76408181</a><br>继续<br><a target="_blank" rel="noopener" href="https://gitee.com/shengshifeiyang/jts-learning/blob/master/docs/jts-core/demo/foot-point.md">https://gitee.com/shengshifeiyang/jts-learning/blob/master/docs/jts-core/demo/foot-point.md</a><br><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/268006579">https://www.zhihu.com/question/268006579</a></p>
+<h1 id="algorithm"><a href="#algorithm" class="headerlink" title="algorithm"></a>algorithm</h1><h1 id="geom"><a href="#geom" class="headerlink" title="geom"></a>geom</h1><p>从<a target="_blank" rel="noopener" href="https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/geom/IntersectionMatrix.java">官网地址</a>中可以看到，DE-9IM矩阵值，指两个几何之间的拓扑关系，这种拓扑关系可以用于描述两个几何图形空间关系的一种标准。<br>更多详情可以参考<a target="_blank" rel="noopener" href="https://portal.ogc.org/files/?artifact_id=25355">ogc官网</a>或者<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/DE-9IM">wikipedia</a>。</p>
+<p>DE-9IM矩阵是带有整数项的3x3矩阵，矩阵条目表示每个交点的可能维度<br>。通常将每个几何图形分为三部分：外部（exterior),边界（boundary)和内部(interior)，如下表格。</p>
+<table>
+<thead>
+<tr>
+<th align="center"></th>
+<th align="center">Interior</th>
+<th align="center">Boundary</th>
+<th align="center">Exterior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Interior</td>
+<td align="center">dim(I(a)∩I(b))</td>
+<td align="center">dim(I(a)∩B(b))</td>
+<td align="center">dim(I(a)∩E(b))</td>
+</tr>
+<tr>
+<td align="center">Boundary</td>
+<td align="center">dim(B(a)∩I(b))</td>
+<td align="center">dim(B(a)∩B(b))</td>
+<td align="center">dim(B(a)∩E(b))</td>
+</tr>
+<tr>
+<td align="center">Exterior</td>
+<td align="center">dim(E(a)∩I(b))</td>
+<td align="center">dim(E(a)∩B(b))</td>
+<td align="center">dim(E(a)∩E(b))</td>
+</tr>
+</tbody></table>
+<h2 id="布尔形式"><a href="#布尔形式" class="headerlink" title="布尔形式"></a>布尔形式</h2><p>矩阵的定义域为{-1,0,1,2}，常见的拓扑关系描述符大概10种左右</p>
+<ul>
+<li>0,1,2表示非空，用T进行表示</li>
+<li>空集-1用F表示</li>
+<li>*表示是什么都可以(所以不需要计算)</li>
+</ul>
+<p>可以参考<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/DE-9IM">wikipedia</a>,<a target="_blank" rel="noopener" href="https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/geom/IntersectionMatrix.java">jts</a>或者<a target="_blank" rel="noopener" href="http://libgeos.org/doxygen/classgeos_1_1geom_1_1IntersectionMatrix.html">GEOS</a>找到相关的返回值，部分如下</p>
+<table>
+<thead>
+<tr>
+<th align="center">谓词</th>
+<th align="center">返回值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">相等（Equals)</td>
+<td align="center"><code>T*F**FFF* </code></td>
+</tr>
+<tr>
+<td align="center">相离（Disjoint)</td>
+<td align="center"><code>FF*FF****</code></td>
+</tr>
+<tr>
+<td align="center">相接（Touches)</td>
+<td align="center"><code>FT*******\F**T*****\F***T****</code></td>
+</tr>
+<tr>
+<td align="center">覆盖（Covers)</td>
+<td align="center"><code>T*****FF*\*T****FF*\***T**FF*\****T*FF*</code></td>
+</tr>
+<tr>
+<td align="center">叠置（Overlaps)</td>
+<td align="center"><code>T*T***T**\1*T***T**</code></td>
+</tr>
+</tbody></table>
+<p>参考 </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.giserdqy.com/gis/gisknowledge/35267/?amp=1">空间拓扑关系详解</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhongHW/p/11047022.html">GIS算法基础（一）</a></li>
+</ul>
+<h1 id="MBR"><a href="#MBR" class="headerlink" title="MBR"></a>MBR</h1><p>在JTS或shapely程序中，为了提升计算性能，一般还会先进行MBR判断，再进行DE-9IM判断</p>
+<h1 id="Area"><a href="#Area" class="headerlink" title="Area"></a>Area</h1><p>jts使用<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Shoelace_formula">鞋带定理</a>计算面积</p>
+<h2 id="空间关系"><a href="#空间关系" class="headerlink" title="空间关系"></a>空间关系</h2><ul>
+<li>线段的拐向判断<br>可以利用矢量的叉积判断：<br>p=（x1,y1）,q=(x2,y2)<br>p×q=x1<em>y2-x2</em>y1; </li>
+</ul>
+<p>若PxQ&gt;0，则说明P在Q的顺时针方向</p>
+<p>若PxQ&lt;0，则说明P在Q的逆时针方向</p>
+<p>若PxQ=0，则说明PQ共线(共线有可能反向也可能正向)</p>
+<ul>
+<li>判断点是否在线段上<br>设点为Q，线段为P1P2，判断点Q在该线段上的依据是（Q-P1）X(P2-P1) = 0，这样就保证Q在P1P2这条直线上，但是还是不能保证在P1P2的线段上，所以我们得多加个条件：且Q在P1,P2为对角顶点的矩形内</li>
+<li>判断两线段是否相交<br>分为两步确定两天线段是否相交：<br>①快速排斥试验:mbr<br>②跨立试验:如果ab,cd相交，那么ab必跨过cd，那么（ac x ab ）x（bd xab）&lt;=0</li>
+<li>判断点是否在多边形内<br>一种是射线法，另一种是转角法。</li>
+</ul>
+<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhongHW/p/11047020.html">https://www.cnblogs.com/zhongHW/p/11047020.html</a></p>
+<h1 id="geomgraph"><a href="#geomgraph" class="headerlink" title="geomgraph"></a>geomgraph</h1><h1 id="io"><a href="#io" class="headerlink" title="io"></a>io</h1><h1 id="operation"><a href="#operation" class="headerlink" title="operation"></a>operation</h1><h1 id="simplify"><a href="#simplify" class="headerlink" title="simplify"></a>simplify</h1><h1 id="IntersectionMatrix"><a href="#IntersectionMatrix" class="headerlink" title="IntersectionMatrix"></a>IntersectionMatrix</h1><p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhongHW/p/11047020.html">https://www.cnblogs.com/zhongHW/p/11047020.html</a><br>几何结构<br>DelaunayTriangulationBuilder<br>MinimumBoundingCircle<br>newVoronoiDiagramBuilder<br>度量函数<br>DistanceOp<br>DiscreteHausdorffDistance<br>AreaSimilarityMeasure<br>HausdorffSimilarityMeasure<br>空间算法<br>线段相交算法 RobustLineIntersector<br>数学函数<br>角度分析 Angle<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_43842093/article/details/124853985">JTS学习笔记</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_40294332/article/details/124124042">JTS简介</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/jts/" class="category-chain-item">jts</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>jts</div>
+      <div>http://giscloud.eu.org/jts/jts/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>gis site</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2022年11月15日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/db/spatial-database/" title="spatial_database">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">spatial_database</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/uncategorized/hello-world/" title="Hello World">
+                        <span class="hidden-mobile">Hello World</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
